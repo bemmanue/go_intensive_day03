@@ -1,5 +1,5 @@
 # Day 03 - Go Intensive
-# Tasty Discoveries
+## Tasty Discoveries
 
 ## Chapter I
 ### General rules
