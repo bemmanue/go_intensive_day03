@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{.Title}}</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+<h5>Total: {{.Total}}</h5>
+<ul>{{range .Places}}
+    <li>
+        <div>{{.Name}}</div>
+        <div>{{.Address}}</div>
+        <div>{{.Phone}}</div>
+    </li>{{end}}
+</ul>
+{{if .Previous}}<a href="/?page={{.Previous}}">Previous</a>{{end}}
+{{if .Next}}<a href="/?page={{.Next}}">Next</a>{{end}}
+<a href="/?page={{.Last}}">Last</a>
+</body>
+</html>
