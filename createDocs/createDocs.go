@@ -6,19 +6,26 @@ import (
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/olivere/elastic/v7"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 )
 
 type Type struct {
-	Type string
+	Type string `json:"type"`
+}
+
+type GeoType struct {
+	Type elastic.GeoPoint `json:"type"`
 }
 
 type Doc struct {
-	Name    Type
-	Address Type
-	Phone   Type
+	Name     Type    `json:"name"`
+	Address  Type    `json:"address"`
+	Phone    Type    `json:"phone"`
+	Location GeoType `json:"location"`
 }
 
 func jsonStruct(doc Doc) string {
@@ -35,11 +42,15 @@ func main() {
 		log.Fatalf("Error creating client: %s", err)
 	}
 
-	for i := 1; i <= 15; i++ {
+	for i := 1; i <= 25; i++ {
 		var mydoc Doc
-		mydoc.Name = Type{"Person_№" + strconv.Itoa(i)}
+		lat := rand.Float64() + 55
+		lon := rand.Float64() + 37
+
+		mydoc.Name = Type{"Restaurant_№" + strconv.Itoa(i)}
 		mydoc.Address = Type{"City_№" + strconv.Itoa(i)}
 		mydoc.Phone = Type{"Phone_№" + strconv.Itoa(i)}
+		mydoc.Location = GeoType{elastic.GeoPoint{Lat: lat, Lon: lon}}
 
 		myjson := jsonStruct(mydoc)
 
@@ -58,13 +69,13 @@ func main() {
 
 		if response.IsError() {
 			log.Fatalln("Error indexing document")
-		} else {
-			var res map[string]interface{}
-			if err := json.NewDecoder(response.Body).Decode(&res); err != nil {
-				log.Printf("Error parsing the response body: %s", err)
-			} else {
-				fmt.Println("Status:", response.Status())
-			}
 		}
+
+		var res map[string]interface{}
+		if err := json.NewDecoder(response.Body).Decode(&res); err != nil {
+			log.Fatalf("Error parsing the response body: %s", err)
+		}
+
+		fmt.Println("Status:", response.Status())
 	}
 }
