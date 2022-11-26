@@ -65,9 +65,9 @@ func GetPlaces(page int) ([]Place, int, error) {
 	hits := gjson.Get(myjson, "hits.hits").Array()
 	for _, hit := range hits {
 		var place Place
-		place.Name = hit.Map()["_source"].Map()["Name"].Map()["Type"].String()
-		place.Address = hit.Map()["_source"].Map()["Address"].Map()["Type"].String()
-		place.Phone = hit.Map()["_source"].Map()["Phone"].Map()["Type"].String()
+		place.Name = hit.Map()["_source"].Map()["name"].Map()["type"].String()
+		place.Address = hit.Map()["_source"].Map()["address"].Map()["type"].String()
+		place.Phone = hit.Map()["_source"].Map()["phone"].Map()["type"].String()
 		places = append(places, place)
 	}
 

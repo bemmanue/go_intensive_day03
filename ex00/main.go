@@ -33,11 +33,9 @@ func main() {
 }
 `
 	// If elasticsearch works on host
-	//
 	//es, err := elastic.NewClient(elastic.SetURL("server-cert:9200"))
 
 	// In case of elasticsearch works on docker container
-	//
 	es, err := elastic.NewClient(elastic.SetSniff(false))
 	if err != nil {
 		log.Fatalf("Error creating the client: %s\n", err)
