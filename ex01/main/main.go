@@ -7,11 +7,9 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type Data struct {
-	Title    string
 	Total    int
 	Places   []db.Place
 	Previous int
@@ -21,40 +19,91 @@ type Data struct {
 
 func main() {
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("server-cert:8888", nil))
+	log.Fatal(http.ListenAndServe("localhost:8888", nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	param := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(param)
+	if err != nil {
+		writeInvalidParamError(w, r.URL.String())
+		return
+	}
 
-	if strings.HasPrefix(r.URL.RawQuery, "page=") {
-		page, err := strconv.Atoi(strings.TrimPrefix(r.URL.RawQuery, "page="))
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	places, total, err := db.GetPlaces(page)
+	if err != nil {
+		writeInvalidPageError(w, page)
+		return
+	}
 
-		places, total, err := db.GetPlaces(page)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	data := Data{
+		Total:    total,
+		Places:   places,
+		Previous: page - 1,
+		Next:     page + 1,
+		Last:     int(math.Ceil(float64(total) / 10.0)),
+	}
+	if page == data.Last {
+		data.Next = 0
+	}
 
-		data := Data{
-			Title:    "Pages",
-			Total:    total,
-			Places:   places,
-			Previous: page - 1,
-			Next:     page + 1,
-			Last:     int(math.Ceil(float64(total) / 10.0)),
-		}
-		if page == data.Last {
-			data.Next = 0
-		}
+	tmpl, err := template.ParseFiles("./../templates/index.html")
+	if err != nil {
+		writeInternalError(w, page)
+		return
+	}
 
-		tmpl, _ := template.ParseFiles("./../templates/index.html")
-		err = tmpl.Execute(w, data)
-		if err != nil {
-			return
-		}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		writeInternalError(w, page)
+		return
+	}
+}
+
+func writeInvalidParamError(w http.ResponseWriter, param string) {
+	w.WriteHeader(http.StatusBadRequest)
+
+	tmpl, err := template.ParseFiles("./../templates/invalid_param.html")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = tmpl.Execute(w, struct{ Param string }{Param: param})
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+func writeInvalidPageError(w http.ResponseWriter, page int) {
+	w.WriteHeader(http.StatusBadRequest)
+
+	tmpl, err := template.ParseFiles("./../templates/invalid_param.html")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = tmpl.Execute(w, struct{ Page int }{Page: page})
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+func writeInternalError(w http.ResponseWriter, page int) {
+	w.WriteHeader(http.StatusBadRequest)
+
+	tmpl, err := template.ParseFiles("./../templates/internal_error.html")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = tmpl.Execute(w, struct{ Page int }{Page: page})
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 }
