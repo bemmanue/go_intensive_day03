@@ -28,18 +28,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	param := r.URL.Query().Get("page")
 	page, err := strconv.Atoi(param)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		writeInvalidParamError(w, r.URL.String())
 		return
 	}
 
 	places, total, err := db.GetPlaces(page)
 	if err != nil {
-		d := struct {
-			Error string
-		}{fmt.Sprintf("Invalid page value: %d", page)}
-		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(d)
-		w.WriteHeader(http.StatusBadRequest)
+		writeInvalidPageError(w, page)
 		return
 	}
 
@@ -58,6 +53,33 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		log.Fatalln(err)
+		writeInternalError(w, page)
 	}
+}
+
+func writeInvalidParamError(w http.ResponseWriter, param string) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Header().Set("Content-Type", "application/json")
+	d := struct {
+		Error string
+	}{fmt.Sprintf("Invalid parameter: %d", param)}
+	json.NewEncoder(w).Encode(d)
+}
+
+func writeInvalidPageError(w http.ResponseWriter, page int) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Header().Set("Content-Type", "application/json")
+	d := struct {
+		Error string
+	}{fmt.Sprintf("Invalid page value: %d", page)}
+	json.NewEncoder(w).Encode(d)
+}
+
+func writeInternalError(w http.ResponseWriter, page int) {
+	w.WriteHeader(http.StatusBadRequest)
+	d := struct {
+		Error string
+	}{fmt.Sprintf("Page %d: internal error", page)}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(d)
 }

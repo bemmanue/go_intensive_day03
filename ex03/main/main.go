@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"ex03/db"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -22,22 +23,26 @@ func main() {
 func handler(w http.ResponseWriter, r *http.Request) {
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		log.Println(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	lat, err := strconv.ParseFloat(values["lat"][0], 64)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	lon, err := strconv.ParseFloat(values["lon"][0], 64)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	places, err := db.GetPlaces(lat, lon)
 	if err != nil {
-		log.Println(err)
+		writeError(w, "error getting places")
+		return
 	}
 
 	data := Data{
@@ -48,6 +53,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "error getting places")
+		return
 	}
+}
+
+func writeError(w http.ResponseWriter, message string) {
+	d := struct {
+		Error string
+	}{fmt.Sprint(message)}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(d)
 }

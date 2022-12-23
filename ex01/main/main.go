@@ -62,48 +62,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func writeInvalidParamError(w http.ResponseWriter, param string) {
 	w.WriteHeader(http.StatusBadRequest)
-
-	tmpl, err := template.ParseFiles("./../templates/invalid_param.html")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = tmpl.Execute(w, struct{ Param string }{Param: param})
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	tmpl, _ := template.ParseFiles("./../templates/invalid_param.html")
+	tmpl.Execute(w, struct{ Param string }{Param: param})
 }
 
 func writeInvalidPageError(w http.ResponseWriter, page int) {
 	w.WriteHeader(http.StatusBadRequest)
-
-	tmpl, err := template.ParseFiles("./../templates/invalid_param.html")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = tmpl.Execute(w, struct{ Page int }{Page: page})
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	tmpl, _ := template.ParseFiles("./../templates/invalid_param.html")
+	tmpl.Execute(w, struct{ Page int }{Page: page})
 }
 
 func writeInternalError(w http.ResponseWriter, page int) {
 	w.WriteHeader(http.StatusBadRequest)
-
-	tmpl, err := template.ParseFiles("./../templates/internal_error.html")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = tmpl.Execute(w, struct{ Page int }{Page: page})
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	tmpl, _ := template.ParseFiles("./../templates/internal_error.html")
+	tmpl.Execute(w, struct{ Page int }{Page: page})
 }

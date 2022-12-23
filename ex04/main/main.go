@@ -46,7 +46,12 @@ func main() {
 
 func handlerGetToken(w http.ResponseWriter, r *http.Request) {
 	var user User
-	_ = json.NewDecoder(r.Body).Decode(&user)
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		writeError(w, "Error parsing query")
+		return
+	}
 
 	expiresAt := time.Now().Add(time.Minute * 1).Unix()
 
@@ -61,7 +66,8 @@ func handlerGetToken(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		fmt.Println(err)
+		writeError(w, "Error creating token")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -73,7 +79,6 @@ func handlerGetToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-
 	bearer := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(bearer, "Bearer ")
 
@@ -93,22 +98,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		log.Println(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	lat, err := strconv.ParseFloat(values["lat"][0], 64)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	lon, err := strconv.ParseFloat(values["lon"][0], 64)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "Error parsing query")
+		return
 	}
 
 	places, err := db.GetPlaces(lat, lon)
 	if err != nil {
-		log.Println(err)
+		writeError(w, "Error getting places")
+		return
 	}
 
 	data := Data{
@@ -119,6 +128,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		log.Fatalln(err)
+		writeError(w, "Error encoding data")
+		return
 	}
+}
+
+func writeError(w http.ResponseWriter, message string) {
+	d := struct {
+		Error string
+	}{fmt.Sprint(message)}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(d)
 }
