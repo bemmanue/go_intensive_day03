@@ -6,9 +6,7 @@ import (
 	"log"
 )
 
-func main() {
-	index := "places"
-	mapping := `
+var mapping string = `
 {
 	"settings":{
 		"number_of_shards": 1,
@@ -32,6 +30,10 @@ func main() {
 	}
 }
 `
+
+func main() {
+	index := "places"
+
 	// If elasticsearch works on host
 	//es, err := elastic.NewClient(elastic.SetURL("server-cert:9200"))
 
@@ -59,4 +61,6 @@ func main() {
 	} else {
 		log.Println("Index already exist")
 	}
+
+	createDocuments()
 }
