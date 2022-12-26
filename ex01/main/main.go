@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ex01/db"
+	"elastic/db"
 	"html/template"
 	"log"
 	"math"
