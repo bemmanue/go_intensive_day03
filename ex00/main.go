@@ -2,65 +2,80 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/olivere/elastic/v7"
 	"log"
+	"math/rand"
+	"strconv"
+	"strings"
 )
 
-var mapping string = `
-{
-	"settings":{
-		"number_of_shards": 1,
-		"number_of_replicas": 0
-	},
-	"mappings": {
-		"properties": {
-			"name": {
-				"type": "text"
-			},
-			"address": {
-				"type": "text"
-			},
-			"phone": {
-				"type": "text"
-			},
-			"location": {
-				"type": "geo_point"
-			}
-		}
-	}
+type Type struct {
+	Type string `json:"type"`
 }
-`
+
+type GeoType struct {
+	Type elastic.GeoPoint `json:"type"`
+}
+
+type Doc struct {
+	Name     Type    `json:"name"`
+	Address  Type    `json:"address"`
+	Phone    Type    `json:"phone"`
+	Location GeoType `json:"location"`
+}
+
+func jsonStruct(doc Doc) string {
+	res, err := json.Marshal(&doc)
+	if err != nil {
+		log.Fatalf("Error marshalling structure: %s", err)
+	}
+	return string(res)
+}
 
 func main() {
-	index := "places"
-
-	// If elasticsearch works on host
-	//es, err := elastic.NewClient(elastic.SetURL("server-cert:9200"))
-
-	// In case of elasticsearch works on docker container
-	es, err := elastic.NewClient(elastic.SetSniff(false))
+	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		log.Fatalf("Error creating the client: %s\n", err)
+		log.Fatalf("error creating client: %s", err)
 	}
 
-	exists, err := es.IndexExists(index).Do(context.Background())
-	if err != nil {
-		log.Fatalf("Error checking index existence: %s\n", err)
-	}
+	for i := 1; i <= 25; i++ {
+		var mydoc Doc
+		lat := rand.Float64() + 55
+		lon := rand.Float64() + 37
 
-	if !exists {
-		createIndex, err := es.CreateIndex(index).BodyString(mapping).Do(context.Background())
+		mydoc.Name = Type{"Restaurant_№" + strconv.Itoa(i)}
+		mydoc.Address = Type{"City_№" + strconv.Itoa(i)}
+		mydoc.Phone = Type{"Phone_№" + strconv.Itoa(i)}
+		mydoc.Location = GeoType{elastic.GeoPoint{Lat: lat, Lon: lon}}
+
+		myjson := jsonStruct(mydoc)
+
+		request := esapi.IndexRequest{
+			Index:      "places",
+			DocumentID: strconv.Itoa(i),
+			Body:       strings.NewReader(myjson),
+			Refresh:    "true",
+		}
+
+		response, err := request.Do(context.Background(), es)
 		if err != nil {
-			log.Println("Error creating index")
+			log.Fatalf("error creating request: %s", err)
 		}
-		if !createIndex.Acknowledged {
-			log.Println("Adding index is not acknowledged")
-		} else {
-			log.Println("successfully created index")
-		}
-	} else {
-		log.Println("Index already exist")
-	}
+		defer response.Body.Close()
 
-	createDocuments()
+		if response.IsError() {
+			log.Fatalln("error indexing document")
+		}
+
+		var res map[string]interface{}
+		if err := json.NewDecoder(response.Body).Decode(&res); err != nil {
+			log.Fatalf("error parsing the response body: %s", err)
+		}
+
+		fmt.Println("status:", response.Status())
+	}
 }
