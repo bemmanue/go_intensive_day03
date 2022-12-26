@@ -1,4 +1,4 @@
-module go_intensive/go_intensive_day03/ex04
+module elastic
 
 go 1.18
 

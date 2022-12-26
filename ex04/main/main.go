@@ -1,10 +1,10 @@
 package main
 
 import (
+	"elastic/db"
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt"
-	"go_intensive/go_intensive_day03/ex04/db"
 	"log"
 	"net/http"
 	"net/url"

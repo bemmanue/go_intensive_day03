@@ -1,8 +1,8 @@
 package main
 
 import (
+	"elastic/db"
 	"encoding/json"
-	"ex03/db"
 	"fmt"
 	"log"
 	"net/http"

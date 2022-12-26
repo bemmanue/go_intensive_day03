@@ -1,4 +1,4 @@
-module ex02
+module elastic
 
 go 1.18
 
